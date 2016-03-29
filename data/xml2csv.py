@@ -42,40 +42,35 @@ xmlPath = sys.argv[1]
 csvPath = xmlPath.split('.xml')[0] + '.csv'
 csvFile = open(csvPath, 'w')
 elem = ET.parse(xmlPath).getroot()
-rankings = elem.findall(".//ranking-item")
 
-for j, ranking in enumerate(rankings):
-    csv_row = {}
-    csv_row['srclang'] = '-1'
-    csv_row['trglang'] = '-1'
-    csv_row['documentId'] = '-1'
-    csv_row['segmentId'] = ranking.attrib['id']
-    csv_row['judgeID'] = ranking.attrib['user']
-    csv_row['srcIndex'] = ranking.attrib['id']
-    for x in range(2):
-        systemID = "system{}Id".format(str(x+1))
-        systemNumber = "system{}Number".format(str(x+1))
-        systemRank = "system{}rank".format(str(x+1))
-        csv_row[systemID] = ''
-        csv_row[systemNumber] = ''
-        csv_row[systemRank] = ''
-    writer = csv.DictWriter(csvFile, fieldnames=csv_row.keys())
-    if j == 0:
-        writer.writerow(dict( (n,n) for n in csv_row.keys() ))
+header_fields = 'srclang,trglang,srcIndex,judgeID,system1Id,system1rank,system2Id,system2rank'.split(',')
+writer = csv.DictWriter(csvFile, fieldnames=header_fields)
 
-    systems_ranks = []
-    systems_ranks = extract_all_judgements(ranking)
+writer.writeheader()
 
-    for element in itertools.combinations(systems_ranks, N):
-        for i, system_rank in enumerate(element):
-            systemID = "system{}Id".format(str(i+1))
-            systemNumber = "system{}Number".format(str(i+1))
-            systemRank = "system{}rank".format(str(i+1))
-            csv_row[systemID] = system_rank[0]
-            csv_row[systemNumber] = '-1'
-            csv_row[systemRank] = system_rank[1]
+hits = elem.findall(".//HIT")
+for hit in hits:
+    source_lang = hit.attrib['source-language']
+    target_lang = hit.attrib['target-language']
 
-        writer = csv.DictWriter(csvFile, fieldnames=csv_row.keys())
-        writer.writerow(csv_row)
+    rankings = hit.findall(".//ranking-task")
+
+    for ranking in rankings:
+        for result in ranking.findall(".//ranking-result"):
+            csv_row = {}
+            csv_row['srcIndex'] = ranking.attrib['id']
+            csv_row['srclang'] = source_lang
+            csv_row['trglang'] = target_lang
+            csv_row['judgeID'] = result.attrib['user']
+
+            systems_ranks = extract_all_judgements(result)
+            for element in itertools.combinations(systems_ranks, N):
+                for i, system_rank in enumerate(element):
+                    systemID = "system{}Id".format(str(i+1))
+                    systemRank = "system{}rank".format(str(i+1))
+                    csv_row[systemID] = system_rank[0]
+                    csv_row[systemRank] = system_rank[1]
+
+                writer.writerow(csv_row)
 
 csvFile.close()
