@@ -67,7 +67,7 @@ def parse_csv():
     all_systems = []
     sent_sys_rank = defaultdict(list)
     for i,row in enumerate(DictReader(sys.stdin)):
-        sentID = int(row.get('segmentId'))
+        sentID = int(row.get('srcIndex'))
         systems = []
         ranks = []
         for num in range(1, args.num_systems+1):

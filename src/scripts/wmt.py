@@ -39,7 +39,7 @@ def rankings(fh, numsym=5):
     ### Parsing csv file and return system names and rank(1-5) for each sentence
     sent_sys_rank = defaultdict(list)
     for i,row in enumerate(DictReader(fh)):
-        sentID = int(row.get('segmentId'))
+        sentID = int(row.get('srcIndex'))
         systems = []
         ranks = []
         for num in range(1, 1+numsym):
